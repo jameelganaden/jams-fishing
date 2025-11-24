@@ -9,7 +9,7 @@ const Aquarium = ({ aquarium, inv, time, onClose, addToAquarium, removeFromAquar
         <button onPointerDown={onClose} className="bg-blue-800 text-white px-2 rounded text-xs">X</button>
       </div>
       
-      <div className="bg-blue-800/30 rounded-lg h-40 relative mb-2">
+      <div className="bg-blue-800/30 rounded-lg h-40 md:h-64 relative mb-2">
         <svg className="w-full h-full">
           {aquarium.map(f => <Fish key={f.id} f={f} time={time} />)}
         </svg>

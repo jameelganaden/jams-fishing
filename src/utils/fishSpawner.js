@@ -13,16 +13,21 @@ export const spawnFish = (env, rod, rarityUpgrade) => {
       size: 'Boss',
       trait: 'normal',
       rarity: 5,
-      sx: 180,
-      sy: 180,
-      ax: 40,
-      ay: 25,
+      sx: window.innerWidth / 2,
+      sy: window.innerHeight / 2,
+      ax: Math.min(100, window.innerWidth * 0.15),
+      ay: Math.min(80, window.innerHeight * 0.15),
       spd: 0.2,
       ph: 0,
       env,
       boss: true
     }];
   }
+
+  const centerX = window.innerWidth / 2;
+  const centerY = window.innerHeight / 2;
+  const rangeX = Math.min(300, window.innerWidth * 0.4);
+  const rangeY = Math.min(200, window.innerHeight * 0.3);
 
   return ENVS[env].colors.map(([hex, name, rarity], i) => {
     const sz = pick(SIZES, rarityUpgrade);
@@ -36,8 +41,8 @@ export const spawnFish = (env, rod, rarityUpgrade) => {
       size: sz.n,
       trait: tr.n,
       rarity,
-      sx: 50 + Math.random() * 280,
-      sy: 130 + Math.random() * 160,
+      sx: centerX - rangeX / 2 + Math.random() * rangeX,
+      sy: centerY - rangeY / 2 + Math.random() * rangeY,
       ax: 20 + Math.random() * 25,
       ay: 15 + Math.random() * 20,
       spd: 0.3 + Math.random() * 0.3,

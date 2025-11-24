@@ -77,7 +77,7 @@ const CatchingGame = ({ f, onWin, onLose, spdLvl }) => {
 
   return (
     <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-20" onPointerDown={tap}>
-      <div className="bg-white rounded-xl p-4 text-center" onPointerDown={e => e.stopPropagation()}>
+      <div className="bg-white rounded-xl p-4 text-center" onPointerDown={tap}>
         <p className="font-bold">{f.boss ? `👑 ${f.name}` : f.name}</p>
         <p className="text-xs text-gray-500">{f.size} • {f.trait} • R{f.rarity}</p>
         <p className="text-gray-600 text-sm my-2">{msg}</p>

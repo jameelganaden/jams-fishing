@@ -143,8 +143,20 @@ function App() {
     if (aquarium.length >= 10) return;
     const f = inv.find(x => x.id === id);
     if (f && !f.fav) {
-      setAquarium(p => [...p, { ...f, sx: 50 + Math.random() * 260, sy: 50 + Math.random() * 120, ax: 20 + Math.random() * 30, ay: 15 + Math.random() * 25, spd: 0.2 + Math.random() * 0.3, ph: Math.random() * 6 }]);
-      setInv(p => p.filter(x => x.id !== id));
+      const aquariumEl = document.querySelector('.bg-blue-800\\/30');
+      const width = aquariumEl ? aquariumEl.offsetWidth : 400;
+      const height = aquariumEl ? aquariumEl.offsetHeight : 160;
+    
+    setAquarium(p => [...p, { 
+      ...f, 
+      sx: width / 2 - width * 0.3 + Math.random() * width * 0.6,
+      sy: height / 2 - height * 0.3 + Math.random() * height * 0.6,
+      ax: 20 + Math.random() * 30, 
+      ay: 15 + Math.random() * 25, 
+      spd: 0.2 + Math.random() * 0.3, 
+      ph: Math.random() * 6 
+    }]);
+    setInv(p => p.filter(x => x.id !== id));
     }
   };
   
@@ -208,28 +220,28 @@ function App() {
       </svg>
       
       <div className="absolute top-2 left-2 flex flex-col gap-1 z-10">
-        <button onPointerDown={() => setPanel('inv')} className="bg-amber-700 text-white px-2 py-1 rounded text-xs">🎒{inv.length}</button>
-        <button onPointerDown={() => setPanel('idx')} className="bg-cyan-700 text-white px-2 py-1 rounded text-xs">📖</button>
-        <button onPointerDown={() => setPanel('aqua')} className="bg-blue-600 text-white px-2 py-1 rounded text-xs">🐠{aquarium.length}</button>
-        <button onPointerDown={() => setPanel('ach')} className="bg-yellow-600 text-white px-2 py-1 rounded text-xs">🏆</button>
-        <button onPointerDown={() => setPanel('shop')} className="bg-indigo-600 text-white px-2 py-1 rounded text-xs">🏪</button>
-        <button onPointerDown={() => setPanel('upg')} className="bg-purple-600 text-white px-2 py-1 rounded text-xs">⬆️</button>
+        <button onPointerDown={() => setPanel('inv')} className="bg-amber-700 text-white px-3 py-2 rounded text-sm md:text-base">🎒{inv.length}</button>
+        <button onPointerDown={() => setPanel('idx')} className="bg-cyan-700 text-white px-3 py-2 rounded text-sm md:text-base">📖</button>
+        <button onPointerDown={() => setPanel('aqua')} className="bg-blue-600 text-white px-3 py-2 rounded text-sm md:text-base">🐠{aquarium.length}</button>
+        <button onPointerDown={() => setPanel('ach')} className="bg-yellow-600 text-white px-3 py-2 rounded text-sm md:text-base">🏆</button>
+        <button onPointerDown={() => setPanel('shop')} className="bg-indigo-600 text-white px-3 py-2 rounded text-sm md:text-base">🏪</button>
+        <button onPointerDown={() => setPanel('upg')} className="bg-purple-600 text-white px-3 py-2 rounded text-sm md:text-base">⬆️</button>
       </div>
       
-      <div className="absolute top-2 right-2 z-10 text-right text-sm">
-        <p className="text-yellow-300 font-bold drop-shadow">💰{pts}</p>
-        <p className="text-white text-xs">{rodData?.name}</p>
-        {streak > 1 && <p className="text-orange-300 text-xs">🔥{streak}</p>}
+      <div className="absolute top-2 right-2 z-10 text-right">
+        <p className="text-yellow-300 font-bold drop-shadow text-base md:text-lg">💰{pts}</p>
+        <p className="text-white text-sm md:text-base">{rodData?.name}</p>
+        {streak > 1 && <p className="text-orange-300 text-sm md:text-base">🔥{streak}</p>}
       </div>
       
-      <select value={env} onChange={e => unlocked.includes(e.target.value) && setEnv(e.target.value)} className="absolute top-2 left-1/2 -translate-x-1/2 z-10 bg-white/90 px-2 py-1 rounded text-xs">
+      <select value={env} onChange={e => unlocked.includes(e.target.value) && setEnv(e.target.value)} className="absolute top-2 left-1/2 -translate-x-1/2 z-10 bg-white/90 px-3 py-2 rounded text-sm md:text-base">
         {Object.entries(ENVS).map(([k, v]) => <option key={k} value={k} disabled={!unlocked.includes(k)}>{v.name}{!unlocked.includes(k) ? '🔒' : ''}</option>)}
       </select>
       
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-center">
-        <p className="text-white mb-2 drop-shadow">{msg}</p>
-        {mode === 'idle' && <button onPointerDown={cast} className="bg-green-600 text-white px-5 py-2 rounded-full font-bold">🎣 Cast</button>}
-        {mode === 'wait' && <button onPointerDown={() => { clearTimeout(waitRef.current); setMode('idle'); setMsg('Cancelled'); }} className="bg-red-600 text-white px-4 py-1 rounded-full text-sm">Cancel</button>}
+      <div className="absolute bottom-12 md:bottom-16 left-1/2 -translate-x-1/2 text-center">
+        <p className="text-white mb-2 drop-shadow text-base md:text-lg">{msg}</p>
+        {mode === 'idle' && <button onPointerDown={cast} className="bg-green-600 text-white px-6 py-3 md:px-8 md:py-4 rounded-full font-bold text-base md:text-xl">🎣 Cast</button>}
+        {mode === 'wait' && <button onPointerDown={() => { clearTimeout(waitRef.current); setMode('idle'); setMsg('Cancelled'); }} className="bg-red-600 text-white px-5 py-2 md:px-6 md:py-3 rounded-full text-sm md:text-base">Cancel</button>}
       </div>
       
       {mode === 'catch' && hooked && <CatchingGame f={hooked} onWin={win} onLose={lose} spdLvl={upgrades.speed} />}

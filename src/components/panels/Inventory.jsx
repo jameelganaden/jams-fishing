@@ -34,7 +34,13 @@ const Inventory = ({ inv, sellMode, setSellMode, onClose, toggleFav, sellFish, s
           <div
             key={f.id}
             className={`bg-white rounded p-1 text-center relative ${f.fav ? 'ring-2 ring-yellow-400' : ''}`}
-            onPointerDown={() => sellMode && !f.fav ? sellFish(f.id) : toggleFav(f.id)}
+            onPointerDown={() => {
+              if (sellMode) {
+                if (!f.fav) sellFish(f.id);
+              } else {
+                toggleFav(f.id);
+              }
+            }}
           >
             <svg width="32" height="24">
               <Fish f={{ ...f, sx: 16, sy: 12, ax: 0, ay: 0, spd: 0, r: 9 }} time={0} />
