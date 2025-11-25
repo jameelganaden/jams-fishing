@@ -12,6 +12,10 @@ const Fish = ({ f, time }) => {
     ? 'drop-shadow(0 0 15px gold)' 
     : '';
 
+  // scale fish
+  const scaleFactor = Math.min(window.innerWidth, window.innerHeight) / 1000;
+  const r = f.r * Math.max(1, scaleFactor);
+
   return (
     <g style={{ filter: flt }}>
       {f.trait === 'rainbow' && (
@@ -26,11 +30,11 @@ const Fish = ({ f, time }) => {
           </linearGradient>
         </defs>
       )}
-      <ellipse cx={x} cy={y} rx={f.r} ry={f.r * 0.6} fill={f.trait === 'rainbow' ? `url(#rb${f.id})` : f.color} opacity={op} />
-      <polygon points={`${x - f.r * 0.9},${y} ${x - f.r * 1.3},${y - f.r * 0.4} ${x - f.r * 1.3},${y + f.r * 0.4}`} fill={f.trait === 'rainbow' ? `url(#rb${f.id})` : f.color} opacity={op} />
-      <circle cx={x + f.r * 0.4} cy={y - f.r * 0.1} r={f.r * 0.1} fill="#fff" opacity={op} />
-      <circle cx={x + f.r * 0.4} cy={y - f.r * 0.1} r={f.r * 0.05} fill="#000" opacity={op} />
-      {f.boss && <text x={x} y={y - f.r - 5} textAnchor="middle" fill="gold" fontSize="9">👑</text>}
+      <ellipse cx={x} cy={y} rx={r} ry={r * 0.6} fill={f.trait === 'rainbow' ? `url(#rb${f.id})` : f.color} opacity={op} />
+      <polygon points={`${x - r * 0.9},${y} ${x - r * 1.3},${y - r * 0.4} ${x - r * 1.3},${y + r * 0.4}`} fill={f.trait === 'rainbow' ? `url(#rb${f.id})` : f.color} opacity={op} />
+      <circle cx={x + r * 0.4} cy={y - r * 0.1} r={r * 0.1} fill="#fff" opacity={op} />
+      <circle cx={x + r * 0.4} cy={y - r * 0.1} r={r * 0.05} fill="#000" opacity={op} />
+      {f.boss && <text x={x} y={y - r - 5} textAnchor="middle" fill="gold" fontSize={r * 0.15} fontWeight="bold">👑</text>}
     </g>
   );
 };

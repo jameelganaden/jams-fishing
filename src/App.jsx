@@ -13,6 +13,33 @@ import { calcValue } from './utils/calculations';
 
 const SAVE_KEY = 'fish-v3';
 
+const LEVEL_TITLES = [
+  { min: 1, max: 4, title: 'New Fisher' },
+  { min: 5, max: 9, title: 'Amateur Fisher' },
+  { min: 10, max: 19, title: 'Regular Fisher' },
+  { min: 20, max: 29, title: 'Advanced Fisher' },
+  { min: 30, max: 39, title: 'Expert Fisher' },
+  { min: 40, max: 49, title: 'Master Fisher' },
+  { min: 50, max: 59, title: 'Pro Fisher' },
+  { min: 60, max: Infinity, title: 'Godly Fisher' }
+];
+
+const getLevelTitle = (level) => {
+  const titleData = LEVEL_TITLES.find(t => level >= t.min && level <= t.max);
+  return titleData?.title || 'Fisher';
+};
+
+const getExpForLevel = (level) => {
+  return Math.floor(100 * Math.pow(1.15, level - 1));
+};
+
+const calculateExp = (fish, isNew, rarity) => {
+  let baseExp = fish.boss ? 100 : 20;
+  if (isNew) baseExp *= 3;
+  baseExp *= rarity;
+  return Math.floor(baseExp);
+};
+
 function App() {
   const [env, setEnv] = useState('ocean');
   const [fish, setFish] = useState([]);
@@ -35,6 +62,9 @@ function App() {
   const [loaded, setLoaded] = useState(false);
   const [sellMode, setSellMode] = useState(false);
   const waitRef = useRef();
+  const [level, setLevel] = useState(1);
+  const [exp, setExp] = useState(0);
+  const [showLevelUp, setShowLevelUp] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -94,20 +124,75 @@ function App() {
     }, 300);
   };
 
+  useEffect(() => {
+  (async () => {
+    try {
+      const res = await window.storage.get(SAVE_KEY);
+      if (res?.value) {
+        const d = JSON.parse(res.value);
+        setInv(d.inv || []);
+        setIdx(d.idx || {});
+        setPts(d.pts || 0);
+        setUnlocked(d.unlocked || ['ocean']);
+        setRods(d.rods || ['basic']);
+        setRod(d.rod || 'basic');
+        setAchs(d.achs || []);
+        setAquarium(d.aquarium || []);
+        setUpgrades(d.upgrades || { speed: 0, rarity: 0, bite: 0, value: 0 });
+        setLevel(d.level || 1);
+        setExp(d.exp || 0);
+        if (d.env) setEnv(d.env);
+        setMsg('Loaded!');
+      }
+    } catch (e) {}
+    setLoaded(true);
+  })();
+}, []);
+
+  useEffect(() => {
+    if (!loaded) return;
+    (async () => {
+      try {
+        await window.storage.set(SAVE_KEY, JSON.stringify({ inv, idx, pts, unlocked, rods, rod, achs, env, aquarium, upgrades, level, exp }));
+      } catch (e) {}
+    })();
+  }, [inv, idx, pts, unlocked, rods, rod, achs, env, aquarium, upgrades, loaded, level, exp]);
+
   const win = () => {
     const f = { ...hooked, id: `c${Date.now()}`, fav: false };
     setInv(p => [...p, f]);
+    
     const key = `${f.env}-${f.name}`;
+    const isNew = !idx[key];
+    
     setIdx(p => {
       const prev = p[key] || { ...f, sizes: [], traits: [] };
       return { ...p, [key]: { ...prev, sizes: [...new Set([...prev.sizes, f.size])], traits: [...new Set([...prev.traits, f.trait])] }};
     });
+    
+    const earnedExp = calculateExp(f, isNew, f.rarity || 1);
+    const newExp = exp + earnedExp;
+    const expNeeded = getExpForLevel(level);
+    
+    if (newExp >= expNeeded) {
+      const goldReward = Math.floor(100 * Math.pow(1.2, level - 1));
+      setPts(p => p + goldReward);
+      setLevel(l => l + 1);
+      setExp(newExp - expNeeded);
+      setShowLevelUp(true);
+      setTimeout(() => setShowLevelUp(false), 3000);
+      setMsg(`Level Up! +${goldReward} gold!`);
+    } else {
+      setExp(newExp);
+      setMsg(`Caught! +${earnedExp} EXP`);
+    }
+    
     setStreak(s => s + 1);
     if (!achs.includes('first')) setAchs(a => [...a, 'first']);
     if (inv.length + 1 >= 10 && !achs.includes('ten')) setAchs(a => [...a, 'ten']);
     if (f.boss && !achs.includes('boss')) setAchs(a => [...a, 'boss']);
     if (f.trait === 'rainbow' && !achs.includes('rainbow')) setAchs(a => [...a, 'rainbow']);
-    setMsg('Caught!');
+    
     setHooked(null);
     setMode('idle');
     setFish(spawnFish(env, rod, upgrades.rarity));
@@ -205,6 +290,8 @@ function App() {
       setAchs([]);
       setAquarium([]);
       setUpgrades({ speed: 0, rarity: 0, bite: 0, value: 0 });
+      setLevel(1);
+      setExp(0);
       setEnv('ocean');
       setMsg('Reset complete!');
     }
@@ -219,29 +306,45 @@ function App() {
         {fish.map(f => <Fish key={f.id} f={f} time={time} />)}
       </svg>
       
-      <div className="absolute top-2 left-2 flex flex-col gap-1 z-10">
-        <button onPointerDown={() => setPanel('inv')} className="bg-amber-700 text-white px-3 py-2 rounded text-sm md:text-base">🎒{inv.length}</button>
-        <button onPointerDown={() => setPanel('idx')} className="bg-cyan-700 text-white px-3 py-2 rounded text-sm md:text-base">📖</button>
-        <button onPointerDown={() => setPanel('aqua')} className="bg-blue-600 text-white px-3 py-2 rounded text-sm md:text-base">🐠{aquarium.length}</button>
-        <button onPointerDown={() => setPanel('ach')} className="bg-yellow-600 text-white px-3 py-2 rounded text-sm md:text-base">🏆</button>
-        <button onPointerDown={() => setPanel('shop')} className="bg-indigo-600 text-white px-3 py-2 rounded text-sm md:text-base">🏪</button>
-        <button onPointerDown={() => setPanel('upg')} className="bg-purple-600 text-white px-3 py-2 rounded text-sm md:text-base">⬆️</button>
+      {/* Existing UI buttons */}
+      <div className="absolute top-4 left-4 flex flex-col gap-2 z-10">
+        <button onPointerDown={() => setPanel('inv')} className="bg-amber-700 text-white px-4 py-3 rounded-lg text-lg font-medium shadow-lg">🎒 {inv.length}</button>
+        <button onPointerDown={() => setPanel('idx')} className="bg-cyan-700 text-white px-4 py-3 rounded-lg text-lg font-medium shadow-lg">📖</button>
+        <button onPointerDown={() => setPanel('aqua')} className="bg-blue-600 text-white px-4 py-3 rounded-lg text-lg font-medium shadow-lg">🐠 {aquarium.length}</button>
+        <button onPointerDown={() => setPanel('ach')} className="bg-yellow-600 text-white px-4 py-3 rounded-lg text-lg font-medium shadow-lg">🏆</button>
+        <button onPointerDown={() => setPanel('shop')} className="bg-indigo-600 text-white px-4 py-3 rounded-lg text-lg font-medium shadow-lg">🏪</button>
+        <button onPointerDown={() => setPanel('upg')} className="bg-purple-600 text-white px-4 py-3 rounded-lg text-lg font-medium shadow-lg">⬆️</button>
       </div>
       
-      <div className="absolute top-2 right-2 z-10 text-right">
-        <p className="text-yellow-300 font-bold drop-shadow text-base md:text-lg">💰{pts}</p>
-        <p className="text-white text-sm md:text-base">{rodData?.name}</p>
-        {streak > 1 && <p className="text-orange-300 text-sm md:text-base">🔥{streak}</p>}
+      <div className="absolute top-4 right-4 z-10 text-right">
+        <p className="text-yellow-300 font-bold drop-shadow-lg text-2xl">💰 {pts}</p>
+        <p className="text-white text-xl font-medium drop-shadow-lg">{rodData?.name}</p>
+        {streak > 1 && <p className="text-orange-300 text-xl font-medium drop-shadow-lg">🔥 {streak}</p>}
       </div>
       
-      <select value={env} onChange={e => unlocked.includes(e.target.value) && setEnv(e.target.value)} className="absolute top-2 left-1/2 -translate-x-1/2 z-10 bg-white/90 px-3 py-2 rounded text-sm md:text-base">
-        {Object.entries(ENVS).map(([k, v]) => <option key={k} value={k} disabled={!unlocked.includes(k)}>{v.name}{!unlocked.includes(k) ? '🔒' : ''}</option>)}
+      <select value={env} onChange={e => unlocked.includes(e.target.value) && setEnv(e.target.value)} className="absolute top-4 left-1/2 -translate-x-1/2 z-10 bg-white/90 px-4 py-3 rounded-lg text-lg font-medium shadow-lg">
+        {Object.entries(ENVS).map(([k, v]) => <option key={k} value={k} disabled={!unlocked.includes(k)}>{v.name}{!unlocked.includes(k) ? ' 🔒' : ''}</option>)}
       </select>
       
-      <div className="absolute bottom-12 md:bottom-16 left-1/2 -translate-x-1/2 text-center">
-        <p className="text-white mb-2 drop-shadow text-base md:text-lg">{msg}</p>
-        {mode === 'idle' && <button onPointerDown={cast} className="bg-green-600 text-white px-6 py-3 md:px-8 md:py-4 rounded-full font-bold text-base md:text-xl">🎣 Cast</button>}
-        {mode === 'wait' && <button onPointerDown={() => { clearTimeout(waitRef.current); setMode('idle'); setMsg('Cancelled'); }} className="bg-red-600 text-white px-5 py-2 md:px-6 md:py-3 rounded-full text-sm md:text-base">Cancel</button>}
+      {/* EXP Bar */}
+      <div className="absolute bottom-0 left-0 right-0 z-10">
+        <div className="text-center mb-1">
+          <p className="text-white font-bold text-lg drop-shadow-lg">
+            Lv. {level} {getLevelTitle(level)} - {exp}/{getExpForLevel(level)} EXP
+          </p>
+        </div>
+        <div className="w-full h-6 bg-gray-800/80">
+          <div 
+            className="h-full bg-gradient-to-r from-yellow-500 to-yellow-300 transition-all duration-300"
+            style={{ width: `${(exp / getExpForLevel(level)) * 100}%` }}
+          />
+        </div>
+      </div>
+      
+      <div className="absolute bottom-28 left-1/2 -translate-x-1/2 text-center">
+        <p className="text-white mb-3 drop-shadow-lg text-xl font-medium">{msg}</p>
+        {mode === 'idle' && <button onPointerDown={cast} className="bg-green-600 text-white px-10 py-5 rounded-full font-bold text-2xl shadow-xl hover:bg-green-700">🎣 Cast</button>}
+        {mode === 'wait' && <button onPointerDown={() => { clearTimeout(waitRef.current); setMode('idle'); setMsg('Cancelled'); }} className="bg-red-600 text-white px-8 py-4 rounded-full text-xl font-medium shadow-lg">Cancel</button>}
       </div>
       
       {mode === 'catch' && hooked && <CatchingGame f={hooked} onWin={win} onLose={lose} spdLvl={upgrades.speed} />}
